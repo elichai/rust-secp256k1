@@ -369,7 +369,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use Secp256k1;
     use from_hex;
     use super::super::Error::{InvalidPublicKey, InvalidSecretKey};
@@ -389,7 +389,7 @@ mod test {
         });
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn skey_from_slice() {
         let sk = SecretKey::from_slice(&[1; 31]);
         assert_eq!(sk, Err(InvalidSecretKey));
@@ -398,7 +398,7 @@ mod test {
         assert!(sk.is_ok());
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn pubkey_from_slice() {
         assert_eq!(PublicKey::from_slice(&[]), Err(InvalidPublicKey));
         assert_eq!(PublicKey::from_slice(&[1, 2, 3]), Err(InvalidPublicKey));
@@ -410,7 +410,7 @@ mod test {
         assert!(compressed.is_ok());
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn keypair_slice_round_trip() {
         let s = Secp256k1::new();
 
@@ -420,7 +420,7 @@ mod test {
         assert_eq!(PublicKey::from_slice(&pk1.serialize_uncompressed()[..]), Ok(pk1));
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn invalid_secret_key() {
         // Zero
         assert_eq!(SecretKey::from_slice(&[0; 32]), Err(InvalidSecretKey));
@@ -442,7 +442,7 @@ mod test {
         ]).is_err());
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_out_of_range() {
 
         struct BadRng(u8);
@@ -472,7 +472,7 @@ mod test {
         s.generate_keypair(&mut BadRng(0xff));
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_pubkey_from_bad_slice() {
         // Bad sizes
         assert_eq!(
@@ -503,7 +503,7 @@ mod test {
         );
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_debug_output() {
         struct DumbRng(u32);
         impl RngCore for DumbRng {
@@ -530,7 +530,7 @@ mod test {
                    "SecretKey(0100000000000000020000000000000003000000000000000400000000000000)");
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_display_output() {
         static SK_BYTES: [u8; 32] = [
             0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
@@ -583,7 +583,7 @@ mod test {
         assert!(PublicKey::from_str(&long_str).is_err());
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_pubkey_serialize() {
         struct DumbRng(u32);
         impl RngCore for DumbRng {
@@ -611,7 +611,7 @@ mod test {
                    &[3, 124, 121, 49, 14, 253, 63, 197, 50, 39, 194, 107, 17, 193, 219, 108, 154, 126, 9, 181, 248, 2, 12, 149, 233, 198, 71, 149, 134, 250, 184, 154, 229][..]);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_addition() {
         let s = Secp256k1::new();
 
@@ -629,7 +629,7 @@ mod test {
         assert_eq!(PublicKey::from_secret_key(&s, &sk2), pk2);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_multiplication() {
         let s = Secp256k1::new();
 
@@ -647,7 +647,7 @@ mod test {
         assert_eq!(PublicKey::from_secret_key(&s, &sk2), pk2);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn pubkey_hash() {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
@@ -671,7 +671,7 @@ mod test {
         assert_eq!(count, COUNT);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn pubkey_combine() {
         let compressed1 = PublicKey::from_slice(
             &hex!("0241cc121c419921942add6db6482fb36243faf83317c866d2a28d8c6d7089f7ba"),
@@ -691,7 +691,7 @@ mod test {
         assert_eq!(sum1.unwrap(), exp_sum);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn pubkey_equal() {
         let pk1 = PublicKey::from_slice(
             &hex!("0241cc121c419921942add6db6482fb36243faf83317c866d2a28d8c6d7089f7ba"),
@@ -714,7 +714,7 @@ mod test {
     }
 
     #[cfg(feature = "serde")]
-    #[test]
+    #[wasm_bindgen_test]
     fn test_signature_serde() {
         use serde_test::{Configure, Token, assert_tokens};
         static SK_BYTES: [u8; 32] = [

@@ -24,7 +24,7 @@ use super::ffi as super_ffi;
 pub use key::SecretKey;
 pub use key::PublicKey;
 
-mod ffi;
+pub mod ffi;
 
 /// A tag used for recovering the public key from a compact signature
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -171,7 +171,7 @@ impl<C: Verification> Secp256k1<C> {
 
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use rand::{RngCore, thread_rng};
 
     use key::SecretKey;
@@ -179,7 +179,7 @@ mod tests {
     use super::super::{Secp256k1, Message};
     use super::super::Error::{IncorrectSignature, InvalidSignature};
 
-    #[test]
+    #[wasm_bindgen_test]
     fn capabilities() {
         let sign = Secp256k1::signing_only();
         let vrfy = Secp256k1::verification_only();
@@ -205,13 +205,13 @@ mod tests {
         assert_eq!(full.recover(&msg, &sigr), Ok(pk));
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn recid_sanity_check() {
         let one = RecoveryId(1);
         assert_eq!(one, one.clone());
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn sign() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -234,7 +234,7 @@ mod tests {
             RecoveryId(1)))
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn sign_and_verify_fail() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -257,7 +257,7 @@ mod tests {
         assert!(recovered_key != pk);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn sign_with_recovery() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -273,7 +273,7 @@ mod tests {
         assert_eq!(s.recover(&msg, &sig), Ok(pk));
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn bad_recovery() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -288,7 +288,7 @@ mod tests {
         assert!(s.recover(&msg, &sig).is_ok());
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_debug_output() {
         let sig = RecoverableSignature::from_compact(&[
             0x66, 0x73, 0xff, 0xad, 0x21, 0x47, 0x74, 0x1f,
@@ -303,7 +303,7 @@ mod tests {
         assert_eq!(&format!("{:?}", sig), "RecoverableSignature(98882e09f4ed6dc3659e43fc771e0cafa60b1f926f2b77041f744721adff7366898cb609d0ee128d06ae9aa3c48020ff9f705e02f80e1280a8ade05216971a4c01)");
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_recov_sig_serialize_compact() {
         let recid_in = RecoveryId(1);
         let bytes_in = &[
@@ -324,7 +324,7 @@ mod tests {
         assert_eq!(&bytes_in[..], &bytes_out[..]);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_recov_id_conversion_between_i32() {
         assert!(RecoveryId::from_i32(-1).is_err());
         assert!(RecoveryId::from_i32(0).is_ok());
@@ -341,7 +341,7 @@ mod tests {
 
 
 #[cfg(all(test, feature = "unstable"))]
-mod benches {
+pub mod benches {
     #[bench]
     pub fn bench_recover(bh: &mut Bencher) {
         let s = Secp256k1::new();

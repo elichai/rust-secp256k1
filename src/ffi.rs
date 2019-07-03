@@ -256,7 +256,7 @@ extern "C" {
 }
 
 #[cfg(feature = "fuzztarget")]
-mod fuzz_dummy {
+pub mod fuzz_dummy {
     extern crate std;
     use types::*;
     use ffi::*;

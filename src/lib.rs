@@ -146,14 +146,18 @@
 use core::{fmt, ptr, str};
 
 #[macro_use]
-mod macros;
-mod types;
+pub mod macros;
+pub mod types;
 pub mod constants;
 pub mod ecdh;
 pub mod ffi;
 pub mod key;
 #[cfg(feature = "recovery")]
 pub mod recovery;
+#[cfg_attr(test, macro_use)]
+#[cfg(test)]
+extern crate wasm_bindgen_test;
+
 
 pub use key::SecretKey;
 pub use key::PublicKey;
@@ -732,7 +736,7 @@ fn from_hex(hex: &str, target: &mut [u8]) -> Result<usize, ()> {
 
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use rand::{RngCore, thread_rng};
     use std::str::FromStr;
 
@@ -750,7 +754,7 @@ mod tests {
         });
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn capabilities() {
         let sign = Secp256k1::signing_only();
         let vrfy = Secp256k1::verification_only();
@@ -779,7 +783,7 @@ mod tests {
         assert_eq!(pk, new_pk);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn signature_serialize_roundtrip() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -806,7 +810,7 @@ mod tests {
          }
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn signature_display() {
         let hex_str = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
         let byte_str = hex!(hex_str);
@@ -847,14 +851,14 @@ mod tests {
         assert_eq!(&format!("{}", sig), hex_str);
     }
 
-    #[test]
-    fn signature_lax_der() {
-        macro_rules! check_lax_sig(
+    macro_rules! check_lax_sig(
             ($hex:expr) => ({
                 let sig = hex!($hex);
                 assert!(Signature::from_der_lax(&sig[..]).is_ok());
             })
         );
+    #[wasm_bindgen_test]
+    fn signature_lax_der() {
 
         check_lax_sig!("304402204c2dd8a9b6f8d425fcd8ee9a20ac73b619906a6367eac6cb93e70375225ec0160220356878eff111ff3663d7e6bf08947f94443845e0dcc54961664d922f7660b80c");
         check_lax_sig!("304402202ea9d51c7173b1d96d331bd41b3d1b4e78e66148e64ed5992abd6ca66290321c0220628c47517e049b3e41509e9d71e480a0cdc766f8cdec265ef0017711c1b5336f");
@@ -865,7 +869,7 @@ mod tests {
         check_lax_sig!("3044022023ee4e95151b2fbbb08a72f35babe02830d14d54bd7ed1320e4751751d1baa4802206235245254f58fd1be6ff19ca291817da76da65c2f6d81d654b5185dd86b8acf");
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn sign_and_verify() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -881,7 +885,7 @@ mod tests {
          }
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn sign_and_verify_extreme() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -910,7 +914,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn sign_and_verify_fail() {
         let mut s = Secp256k1::new();
         s.randomize(&mut thread_rng());
@@ -929,7 +933,7 @@ mod tests {
         assert_eq!(s.verify(&msg, &sig, &pk), Err(IncorrectSignature));
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_bad_slice() {
         assert_eq!(Signature::from_der(&[0; constants::MAX_SIGNATURE_SIZE + 1]),
                    Err(InvalidSignature));
@@ -947,7 +951,7 @@ mod tests {
         assert!(Message::from_slice(&[1; constants::MESSAGE_SIZE]).is_ok());
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn test_low_s() {
         // nb this is a transaction on testnet
         // txid 8ccc87b72d766ab3128f03176bb1c98293f2d1f85ebfaf07b82cc81ea6891fa9
@@ -969,7 +973,7 @@ mod tests {
     }
 
     #[cfg(feature = "serde")]
-    #[test]
+    #[wasm_bindgen_test]
     fn test_signature_serde() {
         use serde_test::{Configure, Token, assert_tokens};
 
@@ -996,7 +1000,7 @@ mod tests {
 }
 
 #[cfg(all(test, feature = "unstable"))]
-mod benches {
+pub mod benches {
     use rand::{Rng, thread_rng};
     use test::{Bencher, black_box};
 

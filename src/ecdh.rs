@@ -97,12 +97,12 @@ impl ops::Index<ops::RangeFull> for SharedSecret {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use rand::thread_rng;
     use super::SharedSecret;
     use super::super::Secp256k1;
 
-    #[test]
+    #[wasm_bindgen_test]
     fn ecdh() {
         let s = Secp256k1::signing_only();
         let (sk1, pk1) = s.generate_keypair(&mut thread_rng());
@@ -117,7 +117,7 @@ mod tests {
 }
 
 #[cfg(all(test, feature = "unstable"))]
-mod benches {
+pub mod benches {
     use rand::thread_rng;
     use test::{Bencher, black_box};
 
