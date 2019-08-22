@@ -1,0 +1,30 @@
+name: Rust
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: docker://rustlang/rust:nightly
+    - name: Build
+        run:
+          - cargo build --verbose --no-default-features
+          - cargo build --verbose --no-default-features --features="serde"
+          - cargo build --verbose --no-default-features --features="lowmemory"
+          - cargo build --verbose --no-default-features --features="rand"
+          - cargo build --verbose --no-default-features --features="rand serde recovery endomorphism"
+          - cargo build --verbose --no-default-features --features="fuzztarget recovery"
+          - cargo build --verbose --features=fuzztarget
+          - cargo build --verbose
+          - cargo build --verbose --release
+    - name: Run tests
+        run: 
+          - cargo test --verbose --features=rand
+          - cargo test --verbose --features="rand serde"
+          - cargo test --verbose --features="rand serde recovery endomorphism"
+          - cargo test --verbose --release
+          - cargo test --verbose --benches --features=unstable
+          - cargo test --verbose
