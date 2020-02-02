@@ -99,9 +99,8 @@ unsafe fn callback_logic<F>(output: *mut c_uchar, x: *const c_uchar, y: *const c
     ptr::copy_nonoverlapping(y, y_arr.as_mut_ptr(), 32);
 
     let secret = callback(x_arr, y_arr);
-    ptr::copy_nonoverlapping(secret.as_ptr(), output as *mut u8, secret.len());
-
-    secret.len() as c_int
+    *(output as *mut SharedSecret) = secret;
+    1
 }
 
 #[cfg(feature = "std")]
@@ -109,10 +108,10 @@ unsafe extern "C" fn hash_callback_catch_unwind<F>(output: *mut c_uchar, x: *con
     where F: FnMut([u8; 32], [u8; 32]) -> SharedSecret {
 
     let res = ::std::panic::catch_unwind(||callback_logic::<F>(output, x, y, data));
-    if let Ok(len) = res {
-        len
+    if res.is_ok() {
+        1
     } else {
-        -1
+        0
     }
 }
 
@@ -149,18 +148,17 @@ impl SharedSecret {
         let res =  unsafe {
             ffi::secp256k1_ecdh(
                 ffi::secp256k1_context_no_precomp,
-                ss.get_data_mut_ptr(),
+                &mut ss as *mut SharedSecret as *mut c_uchar,
                 point.as_ptr(),
                 scalar.as_ptr(),
                 callback,
                 &mut closure as *mut F as *mut c_void,
             )
         };
-        if res == -1 {
+        if res == 0 {
             return Err(Error::CallbackPanicked);
         }
-        debug_assert!(res >= 16); // 128 bit is the minimum for a secure hash function and the minimum we let users.
-        ss.set_len(res as usize);
+        debug_assert!(ss.len() >= 16); // 128 bit is the minimum for a secure hash function and the minimum we let users.
         Ok(ss)
 
     }
