@@ -89,19 +89,27 @@ impl Deref for SharedSecret {
 }
 
 
+struct CallbackData<F: FnMut([u8; 32], [u8; 32]) -> SharedSecret> {
+    pub callback: F,
+    pub res_len: usize,
+}
+
+
 unsafe fn callback_logic<F>(output: *mut c_uchar, x: *const c_uchar, y: *const c_uchar, data: *mut c_void) -> c_int 
     where F: FnMut([u8; 32], [u8; 32]) -> SharedSecret {
-    let callback: &mut F = &mut *(data as *mut F);
+    let data: &mut CallbackData::<F> = &mut *(data as *mut CallbackData::<F>);
 
     let mut x_arr = [0; 32];
     let mut y_arr = [0; 32];
     ptr::copy_nonoverlapping(x, x_arr.as_mut_ptr(), 32);
     ptr::copy_nonoverlapping(y, y_arr.as_mut_ptr(), 32);
 
-    let secret = callback(x_arr, y_arr);
+    let secret = (data.callback)(x_arr, y_arr);
     ptr::copy_nonoverlapping(secret.as_ptr(), output as *mut u8, secret.len());
 
-    secret.len() as c_int
+    data.res_len = secret.len();
+
+    1
 }
 
 #[cfg(feature = "std")]
@@ -109,10 +117,10 @@ unsafe extern "C" fn hash_callback_catch_unwind<F>(output: *mut c_uchar, x: *con
     where F: FnMut([u8; 32], [u8; 32]) -> SharedSecret {
 
     let res = ::std::panic::catch_unwind(||callback_logic::<F>(output, x, y, data));
-    if let Ok(len) = res {
-        len
+    if res.is_ok() {
+        1
     } else {
-        -1
+        0
     }
 }
 
@@ -142,9 +150,10 @@ impl SharedSecret {
         ss
     }
 
-    fn new_with_callback_internal<F>(point: &PublicKey, scalar: &SecretKey, mut closure: F, callback: ffi::EcdhHashFn) -> Result<SharedSecret, Error>
+    fn new_with_callback_internal<F>(point: &PublicKey, scalar: &SecretKey, closure: F, callback: ffi::EcdhHashFn) -> Result<SharedSecret, Error>
         where F: FnMut([u8; 32], [u8; 32]) -> SharedSecret {
         let mut ss = SharedSecret::empty();
+        let mut data = CallbackData{ callback: closure, res_len: 0};
 
         let res =  unsafe {
             ffi::secp256k1_ecdh(
@@ -153,14 +162,14 @@ impl SharedSecret {
                 point.as_ptr(),
                 scalar.as_ptr(),
                 callback,
-                &mut closure as *mut F as *mut c_void,
+                &mut data as *mut _ as *mut c_void,
             )
         };
-        if res == -1 {
+        if res == 0 {
             return Err(Error::CallbackPanicked);
         }
-        debug_assert!(res >= 16); // 128 bit is the minimum for a secure hash function and the minimum we let users.
-        ss.set_len(res as usize);
+        debug_assert!(data.res_len >= 16); // 128 bit is the minimum for a secure hash function and the minimum we let users.
+        ss.set_len(data.res_len as usize);
         Ok(ss)
 
     }
