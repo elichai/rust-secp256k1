@@ -78,25 +78,6 @@ macro_rules! impl_safe_debug {
                 }
                 Ok(())
             }
-
-            /// Formats the explicit byte value of the secret key kept inside the type as a
-            /// little-endian hexadecimal string.
-            ///
-            /// This is the only method that outputs the actual secret key value, and, thus,
-            /// should be used with extreme precaution.
-            #[deprecated(
-                note = "Caution: you are explicitly outputting secret key value! This can be done
-                only in debug environment and that's why always considered as ``deprecated''"
-            )]
-            #[cfg(any(feature = "std", feature = "alloc"))]
-            pub fn format_secret(&self) -> String {
-                use ::core::fmt::Write;
-                let mut s = String::with_capacity(self.0.len() * 2);
-                for ch in &self.0[..] {
-                    write!(s, "{:02x}", ch);
-                }
-                s
-            }
         }
      }
 }
